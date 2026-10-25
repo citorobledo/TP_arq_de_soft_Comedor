@@ -1,0 +1,28 @@
+@startuml C4_Nivel3_Componentes
+title Diagrama de Componentes C4 (Nivel 3) - API Backend
+
+package "API Backend (Monolito Modular)" {
+    component "Security Middleware (JWT / Roles)" as auth
+    component "Modulo de Entregas" as entregas
+    component "Modulo de Stock (FEFO)" as stock
+    component "Modulo de Comedores" as comedores
+    component "Capa Anticorrupcion (ACL)" as acl
+    component "Repositorios (DAL)" as repo
+}
+
+database "SQLite DB" as db
+node "Padron Provincial API" as padron_ext
+
+auth --> entregas : Delega peticion autorizada
+auth --> stock : Delega consulta stock
+auth --> comedores : Delega gestion comedores
+
+entregas --> stock : Consulta y descuenta stock disponible
+entregas --> comedores : Valida habilitacion del destinatario
+comedores --> acl : Solicita estado de comedor
+acl --> padron_ext : Consulta REST externo (Timeout 2s)
+
+entregas --> repo : Persiste cambios transaccionales
+stock --> repo : Actualiza stock de lotes
+repo --> db : Consultas e Inserts SQL
+@enduml

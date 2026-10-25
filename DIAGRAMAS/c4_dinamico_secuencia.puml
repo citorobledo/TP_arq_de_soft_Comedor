@@ -1,0 +1,40 @@
+@startuml C4_Dinamico_Secuencia
+title Diagrama Dinamico / Secuencia C4 - Registro y Confirmacion de Entrega
+
+actor "Voluntario Deposito" as voluntario
+component "Web App (UI)" as ui
+component "Keycloak (OIDC)" as keycloak
+component "API Backend" as api
+component "Capa Anticorrupcion (ACL)" as acl
+component "Mock Padron Provincial" as padron
+database "SQLite DB" as db
+
+voluntario -> ui : 1. Solicita entrega (ComedorID, Lotes, Cantidades)
+ui -> keycloak : 2. Verifica sesion y obtiene Token JWT
+keycloak --> ui : 3. Token JWT activo (Rol: OperadorDeposito)
+
+ui -> api : 4. POST /v1/entregas (Header: Bearer JWT)
+api -> api : 5. Validar firma JWT y permisos RBAC
+
+api -> api : 6. Dominio 'Entrega': Verifica stock disponible y vencimientos
+api -> acl : 7. Solicitar estado de habilitacion del comedor
+
+alt Cache Local Valido
+    acl --> api : 8a. Estado retornado desde Cache Local
+else Cache Expirado o Inexistente
+    acl -> padron : 8b. GET /comedores/{id}/habilitacion (Timeout 2s)
+    alt Padron Responde OK
+        padron --> acl : 9a. 200 OK
+        acl -> acl : Actualizar Cache Local
+    else Timeout o Fallo de Red
+        acl --> api : 9b. Fallback: Retorna ultimo estado conocido
+    end
+end
+
+api -> api : 10. Confirmar Invariantes (Comedor Habilitado + Stock OK)
+api -> db : 11. INSERT Transaccional en 'Entrega' y 'LineaEntrega'
+db --> api : 12. Confirmacion de escritura (201 Created)
+
+api --> ui : 13. 201 Created
+ui --> voluntario : 14. Confirmacion visual con ID de Entrega generado
+@enduml

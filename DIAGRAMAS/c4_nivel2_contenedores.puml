@@ -1,0 +1,23 @@
+@startuml C4_Nivel2_Contenedores
+title Diagrama de Contenedores C4 (Nivel 2) - Banco de Alimentos
+
+actor "Usuario (Voluntario / Responsable / Auditor)" as user
+
+package "Docker Compose Network" {
+    node "Web App (SPA)" as web
+    node "API Backend (Monolito Modular Clean Arch)" as api
+    database "SQLite DB (database.db)" as db
+    node "Swagger UI (OpenAPI Doc)" as swagger
+    node "Keycloak Container (OIDC)" as keycloak
+    node "Mock Padron Container (Prism)" as mock
+}
+
+user --> web : Usa la aplicacion (HTTPS)
+web --> api : Peticiones REST (JSON)
+web --> keycloak : Redirige para login OIDC
+
+api --> keycloak : Valida Token JWT y Roles (JWKS)
+api --> db : Lee / Escribe datos (SQL)
+api --> mock : Consulta habilitacion con ACL + Cache (REST)
+swagger ..> api : Carga contrato openapi.yaml
+@enduml

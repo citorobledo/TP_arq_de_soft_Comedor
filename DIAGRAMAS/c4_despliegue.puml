@@ -1,0 +1,23 @@
+@startuml C4_Despliegue
+title Diagrama de Despliegue C4 - Escenario 1A (Docker Compose)
+
+node "PC Donada / Servidor Local" {
+    node "Motor Docker Engine / Podman" {
+        package "Red Virtual Docker (backend_net)" {
+            node "Web App Container (Nginx / SPA)" as web
+            node "API Backend Container (Monolito Modular)" as api
+            node "Keycloak Container (OIDC)" as auth
+            node "Mock Padron Container (Prism CLI)" as mock
+            node "Swagger UI Container" as swagger
+            database "SQLite DB (Volumen Persistente)" as db
+        }
+    }
+}
+
+web --> api : Consume API REST (HTTP / JSON)
+web --> auth : Autentica usuario (OIDC / OAuth2)
+api --> auth : Valida Token JWT (JWKS)
+api --> db : Lee / Escribe transacciones (SQLite File I/O)
+api --> mock : Consulta estado comedor (REST con ACL)
+swagger ..> api : Lee contrato openapi.yaml
+@enduml

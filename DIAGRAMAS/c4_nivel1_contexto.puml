@@ -1,0 +1,18 @@
+@startuml C4_Nivel1_Contexto
+title Diagrama de Contexto C4 (Nivel 1) - Banco de Alimentos
+
+actor "Voluntario de Deposito" as voluntario
+actor "Responsable de Comedor" as responsable
+actor "Coordinador / Auditor" as auditor
+
+node "Sistema Banco de Alimentos (Monolito Modular)" as sistema
+node "Keycloak (OIDC Provider)" as keycloak
+node "Padron Provincial de Comedores (Ext)" as padron
+
+voluntario --> sistema : Registra lotes y despachos (HTTP/REST)
+responsable --> sistema : Consulta entregas (HTTP/REST)
+auditor --> sistema : Audita historial de movimientos (HTTP/REST)
+
+sistema --> keycloak : Autentica usuarios y valida roles (OIDC/JWT)
+sistema --> padron : Consulta estado de habilitacion (HTTP/REST con ACL)
+@enduml
